@@ -1,0 +1,19 @@
+{
+  "db": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "1234",
+    "database": "typescript_auth_db"
+  },
+  "jwtSecret": "your-jwt-secret-key-change-this",
+  "email": {
+    "host": "smtp.ethereal.email",
+    "port": 587,
+    "secure": false,
+    "auth": {
+      "user": "ernestina.dare@ethereal.email",
+      "pass": "1aKQ3cvz73fxxb7zmw"
+    }
+  }
+}
