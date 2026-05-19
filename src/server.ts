@@ -6,12 +6,15 @@ import db, { initialize } from './_helpers/db';
 import accountsController from './accounts/accounts.controller';
 import swaggerRouter from './_helpers/swagger';
 
+
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
 
+
+const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(cookieParser());
 
 app.use('/accounts', accountsController);

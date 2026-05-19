@@ -1,10 +1,10 @@
 {
   "db": {
-    "host": "localhost",
-    "port": 3306,
-    "user": "root",
-    "password": "1234",
-    "database": "typescript_auth_db"
+    "host": "mysql-4762338-christianmanto2004-89fa.a.aivencloud.com",
+    "port":17105,
+    "user": "avnadmin",
+    "password": "AVNS_aQe6GG3XI1j9D0LRliC",
+    "database": "manto_db"
   },
   "jwtSecret": "your-jwt-secret-key-change-this",
   "email": {
