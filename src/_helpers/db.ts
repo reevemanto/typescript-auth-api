@@ -7,18 +7,19 @@ const db: any = {};
 export default db;
 
 async function initialize() {
-    // Read from environment variables
     const host = process.env.DB_HOST || 'localhost';
     const port = parseInt(process.env.DB_PORT || '3306');
     const user = process.env.DB_USER || 'root';
     const password = process.env.DB_PASSWORD || '';
     const database = process.env.DB_NAME || 'manto_db';
 
-    console.log('🔍 Connecting to DB:', { host, port, user, database }); // Debug log
+    console.log('Connecting to DB:', { host, port, user, database });
 
     const connection = await mysql.createConnection({ host, port, user, password });
 
-    await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
+    if (process.env.NODE_ENV !== 'production' && host === 'localhost') {
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
+    }
     await connection.end();
 
     const sequelize = new Sequelize(database, user, password, {

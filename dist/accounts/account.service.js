@@ -9,7 +9,6 @@ const crypto_1 = __importDefault(require("crypto"));
 const sequelize_1 = require("sequelize");
 const db_1 = __importDefault(require("../_helpers/db"));
 const send_email_1 = require("../_helpers/send-email");
-const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 const accountService = {
     authenticate,
     refreshToken,
@@ -25,6 +24,31 @@ const accountService = {
     delete: _delete
 };
 exports.default = accountService;
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+// Load config.json for local development (not in production)
+let fileConfig = {};
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        const configPath = path_1.default.join(process.cwd(), 'config.json');
+        if (fs_1.default.existsSync(configPath)) {
+            fileConfig = JSON.parse(fs_1.default.readFileSync(configPath, 'utf8'));
+        }
+    }
+    catch (err) {
+        console.warn('Could not load config.json:', err);
+    }
+}
+// Helper to get JWT secret with production check
+function getJwtSecret() {
+    if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    const secret = process.env.JWT_SECRET || fileConfig.secret;
+    if (!secret)
+        throw new Error('JWT secret is missing');
+    return secret;
+}
 async function authenticate({ email, password, ipAddress }) {
     const account = await db_1.default.Account.scope('withHash').findOne({ where: { email } });
     if (!account || !account.isVerified || !bcryptjs_1.default.compareSync(password, account.passwordHash)) {
@@ -44,7 +68,7 @@ async function authenticate({ email, password, ipAddress }) {
         updated: account.updatedAt,
         isVerified: account.isVerified,
         jwtToken,
-        refreshToken: refreshToken.token // 
+        refreshToken: refreshToken.token
     };
 }
 async function refreshToken({ token, ipAddress }) {
@@ -84,9 +108,10 @@ async function register(params, origin) {
     account.role = isFirstAccount ? 'Admin' : 'User';
     account.verificationToken = crypto_1.default.randomBytes(32).toString('hex');
     account.passwordHash = bcryptjs_1.default.hashSync(params.password, 10);
+    account.isVerified = false;
     await account.save();
     // Send verification email
-    const verifyUrl = `${origin}/accounts/verify-email?token=${account.verificationToken}`;
+    const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
     const html = `<p>Click <a href="${verifyUrl}">here</a> to verify your email.</p>`;
     await (0, send_email_1.sendEmail)(account.email, 'Verify Email', html);
     console.log(`Verification email sent to ${account.email}`);
@@ -96,6 +121,7 @@ async function verifyEmail({ token }) {
     if (!account) {
         throw new Error('Verification failed');
     }
+    account.isVerified = true;
     account.verified = new Date();
     account.verificationToken = null;
     await account.save();
@@ -108,7 +134,7 @@ async function forgotPassword({ email }, origin) {
     account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
     // Send password reset email
-    const resetUrl = `${origin}/accounts/reset-password?token=${account.resetToken}`;
+    const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
     const html = `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`;
     await (0, send_email_1.sendEmail)(account.email, 'Reset Password', html);
     console.log(`Password reset email sent to ${account.email}`);
@@ -122,6 +148,7 @@ async function resetPassword({ token, password }) {
     }
     account.passwordHash = bcryptjs_1.default.hashSync(password, 10);
     account.resetToken = null;
+    account.resetTokenExpires = null;
     await account.save();
 }
 async function getAll() {
@@ -138,6 +165,7 @@ async function create(params) {
         throw new Error('Email is already registered');
     }
     const account = new db_1.default.Account(params);
+    account.isVerified = true;
     account.verified = new Date();
     account.passwordHash = bcryptjs_1.default.hashSync(params.password, 10);
     await account.save();
@@ -158,10 +186,11 @@ async function update(id, params) {
 }
 async function _delete(id) {
     const account = await getById(id);
+    await db_1.default.RefreshToken.destroy({ where: { accountId: id } });
     await account.destroy();
 }
 function generateJwtToken(account) {
-    return jsonwebtoken_1.default.sign({ id: account.id, role: account.role }, jwtSecret, { expiresIn: '15m' });
+    return jsonwebtoken_1.default.sign({ sub: account.id, id: account.id }, getJwtSecret(), { expiresIn: '15m' });
 }
 function generateRefreshToken(account, ipAddress) {
     return new db_1.default.RefreshToken({

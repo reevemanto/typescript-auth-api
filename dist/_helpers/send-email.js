@@ -4,34 +4,34 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = sendEmail;
+const resend_1 = require("resend");
 const nodemailer_1 = __importDefault(require("nodemailer"));
 async function sendEmail(to, subject, html) {
-    console.log('📧 SEND EMAIL CALLED');
-    console.log('📧 TO:', to);
-    console.log('📧 SUBJECT:', subject);
-    console.log('📧 EMAIL_HOST:', process.env.EMAIL_HOST);
-    console.log('📧 EMAIL_USER:', process.env.EMAIL_USER);
-    console.log('📧 EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
-    try {
-        const transporter = nodemailer_1.default.createTransport({
-            host: process.env.EMAIL_HOST,
-            port: parseInt(process.env.EMAIL_PORT || '587'),
-            secure: process.env.EMAIL_SECURE === 'true',
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
-        const info = await transporter.sendMail({
-            from: "Auth API <christianmanto2004@gmail.com>",
-            to: to,
+    // Production on Render - use Resend
+    if (process.env.RESEND_API_KEY) {
+        const resend = new resend_1.Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+            from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
+            to: [to],
             subject: subject,
             html: html
         });
-        console.log('✅ Email sent. Message ID:', info.messageId);
+        return;
     }
-    catch (error) {
-        console.error('❌ Email failed:', error);
-        throw error;
-    }
+    // Local development - Ethereal for email testing 
+    const transporter = nodemailer_1.default.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+            user: 'ernestina.dare@ethereal.email',
+            pass: '1aKQ3cvz73fxxb7zmw'
+        }
+    });
+    await transporter.sendMail({
+        from: "Auth API <noreply@authapi.com>",
+        to: to,
+        subject: subject,
+        html: html
+    });
 }

@@ -6,7 +6,6 @@ import db from '../_helpers/db';
 
 import { sendEmail } from '../_helpers/send-email';
 
-const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 const accountService = {
     authenticate,
     refreshToken,
@@ -23,6 +22,32 @@ const accountService = {
 };
 
 export default accountService;
+
+import fs from 'fs';
+import path from 'path';
+
+// Load config.json for local development (not in production)
+let fileConfig: any = {};
+if (process.env.NODE_ENV !== 'production') {
+    try {
+        const configPath = path.join(process.cwd(), 'config.json');
+        if (fs.existsSync(configPath)) {
+            fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        }
+    } catch (err) {
+        console.warn('Could not load config.json:', err);
+    }
+}
+
+// Helper to get JWT secret with production check
+function getJwtSecret() {
+    if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+        throw new Error('JWT_SECRET environment variable is required in production');
+    }
+    const secret = process.env.JWT_SECRET || fileConfig.secret;
+    if (!secret) throw new Error('JWT secret is missing');
+    return secret;
+}
 
 async function authenticate({ email, password, ipAddress }: { email: string; password: string; ipAddress: string }) {
     const account = await db.Account.scope('withHash').findOne({ where: { email } });
@@ -47,7 +72,7 @@ async function authenticate({ email, password, ipAddress }: { email: string; pas
     updated: account.updatedAt,
     isVerified: account.isVerified,
     jwtToken,
-    refreshToken: refreshToken.token  // 
+    refreshToken: refreshToken.token
 };
 }
 
@@ -99,11 +124,12 @@ async function register(params: any, origin: string) {
     account.role = isFirstAccount ? 'Admin' : 'User';
     account.verificationToken = crypto.randomBytes(32).toString('hex');
     account.passwordHash = bcrypt.hashSync(params.password, 10);
+    account.isVerified = false;
 
     await account.save();
 
     // Send verification email
-    const verifyUrl = `${origin}/accounts/verify-email?token=${account.verificationToken}`;
+    const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
     const html = `<p>Click <a href="${verifyUrl}">here</a> to verify your email.</p>`;
     await sendEmail(account.email, 'Verify Email', html);
     console.log(`Verification email sent to ${account.email}`);
@@ -116,6 +142,7 @@ async function verifyEmail({ token }: { token: string }) {
         throw new Error('Verification failed');
     }
 
+    account.isVerified = true;
     account.verified = new Date();
     account.verificationToken = null;
     await account.save();
@@ -131,7 +158,7 @@ async function forgotPassword({ email }: { email: string }, origin: string) {
     await account.save();
 
     // Send password reset email
-    const resetUrl = `${origin}/accounts/reset-password?token=${account.resetToken}`;
+    const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
     const html = `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`;
     await sendEmail(account.email, 'Reset Password', html);
     console.log(`Password reset email sent to ${account.email}`);
@@ -148,6 +175,7 @@ async function resetPassword({ token, password }: { token: string; password: str
 
     account.passwordHash = bcrypt.hashSync(password, 10);
     account.resetToken = null;
+    account.resetTokenExpires = null;
     await account.save();
 }
 
@@ -167,6 +195,7 @@ async function create(params: any) {
     }
 
     const account = new db.Account(params);
+    account.isVerified = true;
     account.verified = new Date();
     account.passwordHash = bcrypt.hashSync(params.password, 10);
 
@@ -193,11 +222,12 @@ async function update(id: number, params: any) {
 
 async function _delete(id: number) {
     const account = await getById(id);
+    await db.RefreshToken.destroy({ where: { accountId: id } });
     await account.destroy();
 }
 
 function generateJwtToken(account: any) {
-    return jwt.sign({ id: account.id, role: account.role }, jwtSecret, { expiresIn: '15m' });
+    return jwt.sign({ sub: account.id, id: account.id }, getJwtSecret(), { expiresIn: '15m' });
 }
 
 function generateRefreshToken(account: any, ipAddress: string) {

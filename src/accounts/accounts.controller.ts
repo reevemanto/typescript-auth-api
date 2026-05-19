@@ -223,8 +223,8 @@ function setTokenCookie(res: Response, token: string) {
     const cookieOptions = {
         httpOnly: true,
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        secure: process.env.NODE_ENV === 'production',  
-        sameSite: 'lax' as const      
+        sameSite: (process.env.COOKIE_SAMESITE || 'lax') as 'lax' | 'none' | 'strict',
+        secure: process.env.COOKIE_SECURE === 'true'
     };
     res.cookie('refreshToken', token, cookieOptions);
 }

@@ -11,18 +11,22 @@ dotenv.config();
 const app: Application = express();
 const PORT = process.env.PORT || 4000;
 
-
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: corsOrigin, credentials: true }));
 app.use(cookieParser());
+
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use(cors({
+    origin: process.env.NODE_ENV === 'production'
+        ? (corsOrigin ? corsOrigin.split(',').map(x => x.trim()) : false)
+        : (origin: any, callback: any) => callback(null, true),
+    credentials: true
+}));
 
 app.use('/accounts', accountsController);
 app.use('/api-docs', swaggerRouter);
 app.use(errorHandler);
 
-// Initialize database THEN start server
 initialize()
     .then(() => {
         app.listen(PORT, () => {

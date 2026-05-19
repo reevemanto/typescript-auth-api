@@ -14,15 +14,19 @@ const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4000;
-const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:4200';
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
-app.use((0, cors_1.default)({ origin: corsOrigin, credentials: true }));
 app.use((0, cookie_parser_1.default)());
+const corsOrigin = process.env.CORS_ORIGIN;
+app.use((0, cors_1.default)({
+    origin: process.env.NODE_ENV === 'production'
+        ? (corsOrigin ? corsOrigin.split(',').map(x => x.trim()) : false)
+        : (origin, callback) => callback(null, true),
+    credentials: true
+}));
 app.use('/accounts', accounts_controller_1.default);
 app.use('/api-docs', swagger_1.default);
 app.use(error_handler_1.default);
-// Initialize database THEN start server
 (0, db_1.initialize)()
     .then(() => {
     app.listen(PORT, () => {
