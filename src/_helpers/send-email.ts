@@ -1,14 +1,14 @@
 import nodemailer from 'nodemailer';
-import config from '../../config.json';
+
 
 export async function sendEmail(to: string, subject: string, html: string): Promise<void> {
     const transporter = nodemailer.createTransport({
-        host: config.email.host,
-        port: config.email.port,
-        secure: config.email.secure,
+        host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+        port:  parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
         auth: {
-            user: config.email.auth.user,
-            pass: config.email.auth.pass
+            user: process.env.EMAIL_USER || 'ernestina.dare@ethereal.email',
+            pass:  process.env.EMAIL_PASS || '1aKQ3cvz73fxxb7zmw'
         }
     });
 

@@ -3,9 +3,10 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
 import db from '../_helpers/db';
-import config from '../../config.json';
+
 import { sendEmail } from '../_helpers/send-email';
 
+const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 const accountService = {
     authenticate,
     refreshToken,
@@ -196,7 +197,7 @@ async function _delete(id: number) {
 }
 
 function generateJwtToken(account: any) {
-    return jwt.sign({ id: account.id, role: account.role }, config.jwtSecret, { expiresIn: '15m' });
+    return jwt.sign({ id: account.id, role: account.role }, jwtSecret, { expiresIn: '15m' });
 }
 
 function generateRefreshToken(account: any, ipAddress: string) {

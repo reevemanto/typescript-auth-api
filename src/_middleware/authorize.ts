@@ -1,8 +1,8 @@
 import jwt from 'express-jwt';
-import config from '../../config.json';
+
 import db from '../_helpers/db';
 
-const secret = config.jwtSecret;
+const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 
 export default function authorize(roles: any = []) {
     if (typeof roles === 'string') {
