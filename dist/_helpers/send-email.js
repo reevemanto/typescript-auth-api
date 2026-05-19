@@ -14,16 +14,16 @@ async function sendEmail(to, subject, html) {
     console.log('📧 EMAIL_PASS exists:', !!process.env.EMAIL_PASS);
     try {
         const transporter = nodemailer_1.default.createTransport({
-            host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+            host: process.env.EMAIL_HOST,
             port: parseInt(process.env.EMAIL_PORT || '587'),
             secure: process.env.EMAIL_SECURE === 'true',
             auth: {
-                user: process.env.EMAIL_USER || 'ernestina.dare@ethereal.email',
-                pass: process.env.EMAIL_PASS || '1aKQ3cvz73fxxb7zmw'
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
             }
         });
         const info = await transporter.sendMail({
-            from: "Auth API <noreply@authapi.com>",
+            from: "Auth API <christianmanto2004@gmail.com>",
             to: to,
             subject: subject,
             html: html
