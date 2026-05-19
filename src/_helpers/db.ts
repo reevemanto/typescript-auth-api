@@ -7,12 +7,14 @@ const db: any = {};
 export default db;
 
 async function initialize() {
-    // Read from environment variables 
+    // Read from environment variables
     const host = process.env.DB_HOST || 'localhost';
     const port = parseInt(process.env.DB_PORT || '3306');
     const user = process.env.DB_USER || 'root';
     const password = process.env.DB_PASSWORD || '';
     const database = process.env.DB_NAME || 'manto_db';
+
+    console.log('🔍 Connecting to DB:', { host, port, user, database }); // Debug log
 
     const connection = await mysql.createConnection({ host, port, user, password });
 

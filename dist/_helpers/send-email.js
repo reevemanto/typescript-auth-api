@@ -5,15 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendEmail = sendEmail;
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const config_json_1 = __importDefault(require("../../config.json"));
 async function sendEmail(to, subject, html) {
     const transporter = nodemailer_1.default.createTransport({
-        host: config_json_1.default.email.host,
-        port: config_json_1.default.email.port,
-        secure: config_json_1.default.email.secure,
+        host: process.env.EMAIL_HOST || 'smtp.ethereal.email',
+        port: parseInt(process.env.EMAIL_PORT || '587'),
+        secure: process.env.EMAIL_SECURE === 'true',
         auth: {
-            user: config_json_1.default.email.auth.user,
-            pass: config_json_1.default.email.auth.pass
+            user: process.env.EMAIL_USER || 'ernestina.dare@ethereal.email',
+            pass: process.env.EMAIL_PASS || '1aKQ3cvz73fxxb7zmw'
         }
     });
     await transporter.sendMail({

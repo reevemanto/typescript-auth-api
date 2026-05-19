@@ -44,6 +44,10 @@ function authenticate(req, res, next) {
 }
 function refreshToken(req, res, next) {
     const token = req.cookies.refreshToken || req.body.refreshToken;
+    //check if token exists (stuck in status 500 before this)
+    if (!token) {
+        return res.status(200).json({ message: 'No refresh token' });
+    }
     const ipAddress = req.ip || req.socket.remoteAddress || '';
     account_service_1.default.refreshToken({ token, ipAddress })
         .then((result) => {
@@ -190,8 +194,8 @@ function setTokenCookie(res, token) {
     const cookieOptions = {
         httpOnly: true,
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-        secure: false,
-        sameSite: 'strict'
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
     };
     res.cookie('refreshToken', token, cookieOptions);
 }

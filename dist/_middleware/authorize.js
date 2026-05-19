@@ -5,15 +5,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = authorize;
 const express_jwt_1 = __importDefault(require("express-jwt"));
-const config_json_1 = __importDefault(require("../../config.json"));
 const db_1 = __importDefault(require("../_helpers/db"));
-const secret = config_json_1.default.jwtSecret;
+const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 function authorize(roles = []) {
     if (typeof roles === 'string') {
         roles = [roles];
     }
     return [
-        (0, express_jwt_1.default)({ secret, algorithms: ['HS256'] }),
+        (0, express_jwt_1.default)({ secret: jwtSecret, algorithms: ['HS256'] }),
         async (req, res, next) => {
             const account = await db_1.default.Account.findByPk(req.user.id);
             if (!account || (roles.length && !roles.includes(account.role))) {

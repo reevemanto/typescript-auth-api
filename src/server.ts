@@ -5,7 +5,8 @@ import errorHandler from './_middleware/error-handler';
 import db, { initialize } from './_helpers/db';
 import accountsController from './accounts/accounts.controller';
 import swaggerRouter from './_helpers/swagger';
-
+import dotenv from 'dotenv';
+dotenv.config();
 
 const app: Application = express();
 const PORT = process.env.PORT || 4000;

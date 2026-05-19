@@ -8,8 +8,8 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 const sequelize_1 = require("sequelize");
 const db_1 = __importDefault(require("../_helpers/db"));
-const config_json_1 = __importDefault(require("../../config.json"));
 const send_email_1 = require("../_helpers/send-email");
+const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 const accountService = {
     authenticate,
     refreshToken,
@@ -161,7 +161,7 @@ async function _delete(id) {
     await account.destroy();
 }
 function generateJwtToken(account) {
-    return jsonwebtoken_1.default.sign({ id: account.id, role: account.role }, config_json_1.default.jwtSecret, { expiresIn: '15m' });
+    return jsonwebtoken_1.default.sign({ id: account.id, role: account.role }, jwtSecret, { expiresIn: '15m' });
 }
 function generateRefreshToken(account, ipAddress) {
     return new db_1.default.RefreshToken({
