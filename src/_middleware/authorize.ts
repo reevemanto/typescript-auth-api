@@ -10,7 +10,7 @@ export default function authorize(roles: any = []) {
     }
 
     return [
-    jwt({ secret, algorithms: ['HS256'] }),
+    jwt({ secret: jwtSecret, algorithms: ['HS256'] }),
     async (req: any, res: any, next: any) => {
     const account = await db.Account.findByPk(req.user.id);
 
