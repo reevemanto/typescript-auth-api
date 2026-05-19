@@ -2,8 +2,9 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
+import fs from 'fs';
+import path from 'path';
 import db from '../_helpers/db';
-
 import { sendEmail } from '../_helpers/send-email';
 
 const accountService = {
@@ -23,10 +24,6 @@ const accountService = {
 
 export default accountService;
 
-import fs from 'fs';
-import path from 'path';
-
-// Load config.json for local development (not in production)
 let fileConfig: any = {};
 if (process.env.NODE_ENV !== 'production') {
     try {
@@ -39,7 +36,6 @@ if (process.env.NODE_ENV !== 'production') {
     }
 }
 
-// Helper to get JWT secret with production check
 function getJwtSecret() {
     if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
         throw new Error('JWT_SECRET environment variable is required in production');
@@ -52,7 +48,7 @@ function getJwtSecret() {
 async function authenticate({ email, password, ipAddress }: { email: string; password: string; ipAddress: string }) {
     const account = await db.Account.scope('withHash').findOne({ where: { email } });
 
-    if (!account || !account.isVerified || !bcrypt.compareSync(password, account.passwordHash)) {
+    if (!account || !account.verified || !bcrypt.compareSync(password, account.passwordHash)) {
         throw new Error('Email or password is incorrect');
     }
 
@@ -61,19 +57,19 @@ async function authenticate({ email, password, ipAddress }: { email: string; pas
 
     await refreshToken.save();
 
-   return {
-    id: account.id,
-    title: account.title,
-    firstName: account.firstName,
-    lastName: account.lastName,
-    email: account.email,
-    role: account.role,
-    created: account.createdAt,
-    updated: account.updatedAt,
-    isVerified: account.isVerified,
-    jwtToken,
-    refreshToken: refreshToken.token
-};
+    return {
+        id: account.id,
+        title: account.title,
+        firstName: account.firstName,
+        lastName: account.lastName,
+        email: account.email,
+        role: account.role,
+        created: account.createdAt,
+        updated: account.updatedAt,
+        verified: account.verified,
+        jwtToken,
+        refreshToken: refreshToken.token
+    };
 }
 
 async function refreshToken({ token, ipAddress }: { token: string; ipAddress: string }) {
@@ -124,11 +120,9 @@ async function register(params: any, origin: string) {
     account.role = isFirstAccount ? 'Admin' : 'User';
     account.verificationToken = crypto.randomBytes(32).toString('hex');
     account.passwordHash = bcrypt.hashSync(params.password, 10);
-    account.isVerified = false;
 
     await account.save();
 
-    // Send verification email
     const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
     const html = `<p>Click <a href="${verifyUrl}">here</a> to verify your email.</p>`;
     await sendEmail(account.email, 'Verify Email', html);
@@ -142,7 +136,6 @@ async function verifyEmail({ token }: { token: string }) {
         throw new Error('Verification failed');
     }
 
-    account.isVerified = true;
     account.verified = new Date();
     account.verificationToken = null;
     await account.save();
@@ -157,7 +150,6 @@ async function forgotPassword({ email }: { email: string }, origin: string) {
     account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
 
-    // Send password reset email
     const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
     const html = `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`;
     await sendEmail(account.email, 'Reset Password', html);
@@ -195,7 +187,6 @@ async function create(params: any) {
     }
 
     const account = new db.Account(params);
-    account.isVerified = true;
     account.verified = new Date();
     account.passwordHash = bcrypt.hashSync(params.password, 10);
 

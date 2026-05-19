@@ -32,10 +32,6 @@ class Account extends Model<AccountAttributes, AccountCreationAttributes> implem
     public resetTokenExpires!: Date | null;
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
-
-    get isVerified(): boolean {
-        return this.verified !== null;
-    }
 }
 
 export function initAccount(sequelize: Sequelize): typeof Account {
