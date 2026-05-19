@@ -20,3 +20,4 @@ export async function sendEmail(to: string, subject: string, html: string): Prom
     });
     console.log(`Email sent to ${to}`);
 }
+

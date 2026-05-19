@@ -46,6 +46,11 @@ function authenticate(req: Request, res: Response, next: NextFunction) {
 
 function refreshToken(req: Request, res: Response, next: NextFunction) {
     const token = req.cookies.refreshToken || req.body.refreshToken;
+
+    //check if token exists (stuck in status 500 before this)
+       if (!token) {
+        return res.status(200).json({ message: 'No refresh token' });
+    }
     const ipAddress = req.ip || req.socket.remoteAddress || '';
     accountService.refreshToken({ token, ipAddress })
         .then((result: any) => {
