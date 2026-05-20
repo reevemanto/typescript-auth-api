@@ -5,9 +5,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const express_1 = require("express");
-const swagger_json_1 = __importDefault(require("../../swagger.json"));
+const yamljs_1 = __importDefault(require("yamljs"));
+const swaggerDocument = yamljs_1.default.load('./swagger.yaml');
 const router = (0, express_1.Router)();
 // Swagger route
-router.use('/', swagger_ui_express_1.default.serve);
-router.get('/', swagger_ui_express_1.default.setup(swagger_json_1.default));
+router.use('/', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swaggerDocument));
 exports.default = router;

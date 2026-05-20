@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = authorize;
 const express_jwt_1 = __importDefault(require("express-jwt"));
 const db_1 = __importDefault(require("../_helpers/db"));
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required in production');
+}
 const jwtSecret = process.env.JWT_SECRET || 'your-fallback-secret-key';
 function authorize(roles = []) {
     if (typeof roles === 'string') {

@@ -3,9 +3,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.initAccount = initAccount;
 const sequelize_1 = require("sequelize");
 class Account extends sequelize_1.Model {
-    get isVerified() {
-        return this.verified !== null;
-    }
 }
 function initAccount(sequelize) {
     Account.init({

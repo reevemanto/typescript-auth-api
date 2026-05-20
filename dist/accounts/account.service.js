@@ -7,6 +7,8 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const crypto_1 = __importDefault(require("crypto"));
 const sequelize_1 = require("sequelize");
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
 const db_1 = __importDefault(require("../_helpers/db"));
 const send_email_1 = require("../_helpers/send-email");
 const accountService = {
@@ -21,12 +23,10 @@ const accountService = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    validateResetToken
 };
 exports.default = accountService;
-const fs_1 = __importDefault(require("fs"));
-const path_1 = __importDefault(require("path"));
-// Load config.json for local development (not in production)
 let fileConfig = {};
 if (process.env.NODE_ENV !== 'production') {
     try {
@@ -39,7 +39,6 @@ if (process.env.NODE_ENV !== 'production') {
         console.warn('Could not load config.json:', err);
     }
 }
-// Helper to get JWT secret with production check
 function getJwtSecret() {
     if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
         throw new Error('JWT_SECRET environment variable is required in production');
@@ -51,7 +50,7 @@ function getJwtSecret() {
 }
 async function authenticate({ email, password, ipAddress }) {
     const account = await db_1.default.Account.scope('withHash').findOne({ where: { email } });
-    if (!account || !account.isVerified || !bcryptjs_1.default.compareSync(password, account.passwordHash)) {
+    if (!account || !account.verified || !bcryptjs_1.default.compareSync(password, account.passwordHash)) {
         throw new Error('Email or password is incorrect');
     }
     const jwtToken = generateJwtToken(account);
@@ -66,7 +65,7 @@ async function authenticate({ email, password, ipAddress }) {
         role: account.role,
         created: account.createdAt,
         updated: account.updatedAt,
-        isVerified: account.isVerified,
+        verified: account.verified,
         jwtToken,
         refreshToken: refreshToken.token
     };
@@ -108,9 +107,7 @@ async function register(params, origin) {
     account.role = isFirstAccount ? 'Admin' : 'User';
     account.verificationToken = crypto_1.default.randomBytes(32).toString('hex');
     account.passwordHash = bcryptjs_1.default.hashSync(params.password, 10);
-    account.isVerified = false;
     await account.save();
-    // Send verification email
     const verifyUrl = `${origin}/account/verify-email?token=${account.verificationToken}`;
     const html = `<p>Click <a href="${verifyUrl}">here</a> to verify your email.</p>`;
     await (0, send_email_1.sendEmail)(account.email, 'Verify Email', html);
@@ -121,7 +118,6 @@ async function verifyEmail({ token }) {
     if (!account) {
         throw new Error('Verification failed');
     }
-    account.isVerified = true;
     account.verified = new Date();
     account.verificationToken = null;
     await account.save();
@@ -133,7 +129,6 @@ async function forgotPassword({ email }, origin) {
     account.resetToken = crypto_1.default.randomBytes(32).toString('hex');
     account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
-    // Send password reset email
     const resetUrl = `${origin}/account/reset-password?token=${account.resetToken}`;
     const html = `<p>Click <a href="${resetUrl}">here</a> to reset your password.</p>`;
     await (0, send_email_1.sendEmail)(account.email, 'Reset Password', html);
@@ -165,7 +160,6 @@ async function create(params) {
         throw new Error('Email is already registered');
     }
     const account = new db_1.default.Account(params);
-    account.isVerified = true;
     account.verified = new Date();
     account.passwordHash = bcryptjs_1.default.hashSync(params.password, 10);
     await account.save();
@@ -199,4 +193,12 @@ function generateRefreshToken(account, ipAddress) {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdByIp: ipAddress
     });
+}
+async function validateResetToken(token) {
+    const account = await db_1.default.Account.findOne({
+        where: { resetToken: token, resetTokenExpires: { [sequelize_1.Op.gt]: new Date() } }
+    });
+    if (!account)
+        throw new Error('Invalid token');
+    return account;
 }

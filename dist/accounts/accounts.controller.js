@@ -22,6 +22,7 @@ router.get('/:id', (0, authorize_1.default)(), getById);
 router.post('/', (0, authorize_1.default)(role_1.default.Admin), createSchema, create);
 router.put('/:id', (0, authorize_1.default)(), updateSchema, update);
 router.delete('/:id', (0, authorize_1.default)(), _delete);
+router.post('/validate-reset-token', validateResetTokenSchema, validateResetToken);
 exports.default = router;
 // Validation schemas
 function authenticateSchema(req, res, next) {
@@ -198,4 +199,15 @@ function setTokenCookie(res, token) {
         secure: process.env.COOKIE_SECURE === 'true'
     };
     res.cookie('refreshToken', token, cookieOptions);
+}
+function validateResetTokenSchema(req, res, next) {
+    const schema = joi_1.default.object({
+        token: joi_1.default.string().required()
+    });
+    (0, validate_request_1.default)(req, next, schema);
+}
+function validateResetToken(req, res, next) {
+    account_service_1.default.validateResetToken(req.body.token)
+        .then(() => res.json({ message: 'Token is valid' }))
+        .catch(next);
 }
