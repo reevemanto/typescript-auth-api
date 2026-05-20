@@ -19,7 +19,8 @@ const accountService = {
     getById,
     create,
     update,
-    delete: _delete
+    delete: _delete,
+    validateResetToken
 };
 
 export default accountService;
@@ -228,4 +229,12 @@ function generateRefreshToken(account: any, ipAddress: string) {
         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdByIp: ipAddress
     });
+}
+
+async function validateResetToken(token: string) {
+    const account = await db.Account.findOne({
+        where: { resetToken: token, resetTokenExpires: { [Op.gt]: new Date() } }
+    });
+    if (!account) throw new Error('Invalid token');
+    return account;
 }

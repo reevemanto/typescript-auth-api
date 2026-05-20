@@ -20,6 +20,7 @@ router.get('/:id', authorize(), getById);
 router.post('/', authorize(Role.Admin), createSchema, create);
 router.put('/:id', authorize(), updateSchema, update);
 router.delete('/:id', authorize(), _delete);
+router.post('/validate-reset-token', validateResetTokenSchema, validateResetToken);
 
 export default router;
 
@@ -227,4 +228,17 @@ function setTokenCookie(res: Response, token: string) {
         secure: process.env.COOKIE_SECURE === 'true'
     };
     res.cookie('refreshToken', token, cookieOptions);
+}
+
+function validateResetTokenSchema(req: Request, res: Response, next: NextFunction) {
+    const schema = Joi.object({
+        token: Joi.string().required()
+    });
+    validateRequest(req, next, schema);
+}
+
+function validateResetToken(req: Request, res: Response, next: NextFunction) {
+    accountService.validateResetToken(req.body.token)
+        .then(() => res.json({ message: 'Token is valid' }))
+        .catch(next);
 }
