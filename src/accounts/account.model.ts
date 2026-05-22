@@ -12,11 +12,11 @@ export interface AccountAttributes {
     verified: Date | null;
     resetToken: string | null;
     resetTokenExpires: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
+   created : Date;
+   updated : Date;
 }
 
-interface AccountCreationAttributes extends Optional<AccountAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface AccountCreationAttributes extends Optional<AccountAttributes, 'id'> {}
 
 class Account extends Model<AccountAttributes, AccountCreationAttributes> implements AccountAttributes {
     public id!: number;
@@ -30,8 +30,8 @@ class Account extends Model<AccountAttributes, AccountCreationAttributes> implem
     public verified!: Date | null;
     public resetToken!: string | null;
     public resetTokenExpires!: Date | null;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+    public readonly created!: Date;
+    public readonly updated!: Date;
 }
 
 export function initAccount(sequelize: Sequelize): typeof Account {
@@ -48,17 +48,19 @@ export function initAccount(sequelize: Sequelize): typeof Account {
             verified: { type: DataTypes.DATE, allowNull: true },
             resetToken: { type: DataTypes.STRING, allowNull: true },
             resetTokenExpires: { type: DataTypes.DATE, allowNull: true },
-            createdAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-            updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
+            created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+            updated: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
         },
         {
             sequelize,
             tableName: 'accounts',
-            createdAt: 'created',     
-            updatedAt: 'updated',     
+            timestamps: true,
+            createdAt   : 'created',
+            updatedAt   : 'updated',    
             defaultScope: { attributes: { exclude: ['passwordHash'] } },
             scopes: { withHash: { attributes: undefined } }
         }
+    
     );
     return Account;
 }
