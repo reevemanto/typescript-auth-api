@@ -88,7 +88,8 @@ function registerSchema(req: Request, res: Response, next: NextFunction) {
         lastName: Joi.string().required(),
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
-        confirmPassword: Joi.string().valid(Joi.ref('password')).required()
+        confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
+        acceptTerms: Joi.boolean().required()
     });
     validateRequest(req, next, schema);
 }
