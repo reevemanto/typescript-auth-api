@@ -34,7 +34,7 @@ async function initialize() {
     db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
 
-   await sequelize.sync();
+   //await sequelize.sync();
     console.log('DB ready — tables already exist.');
 }
 

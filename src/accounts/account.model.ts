@@ -24,6 +24,7 @@ export default function model(sequelize: any) {
 
     const options = {
         timestamps: false,
+         tableName: 'Accounts',
         defaultScope: { attributes: { exclude: ['passwordHash'] } },
         scopes: { withHash: { attributes: {} } }
     };
