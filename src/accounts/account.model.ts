@@ -54,6 +54,8 @@ export function initAccount(sequelize: Sequelize): typeof Account {
         {
             sequelize,
             tableName: 'accounts',
+            createdAt: 'created',     
+            updatedAt: 'updated',     
             defaultScope: { attributes: { exclude: ['passwordHash'] } },
             scopes: { withHash: { attributes: undefined } }
         }
