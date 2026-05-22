@@ -6,7 +6,7 @@ const db: any = {};
 export default db;
 
 async function initialize() {
-    const host = process.env.DB_HOST || 'localhost';
+    const host = process.env.DB_HOST;
     const port = parseInt(process.env.DB_PORT || '3306');
     const user = process.env.DB_USER;
     const password = process.env.DB_PASSWORD;
@@ -38,8 +38,9 @@ async function initialize() {
     db.Account = accountModel(sequelize);
     db.RefreshToken = refreshTokenModel(sequelize);
 
-    db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
-    db.RefreshToken.belongsTo(db.Account);
+  
+    db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
+    db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
     await sequelize.sync({ alter: true });
     console.log('DB synced successfully.');
