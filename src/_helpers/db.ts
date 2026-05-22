@@ -37,7 +37,7 @@ async function initialize() {
     db.Account = initAccount(sequelize);
     db.RefreshToken = initRefreshToken(sequelize);
 
-    await sequelize.sync();
+    await sequelize.sync({ alter: false });
 }
 
 export { initialize };
