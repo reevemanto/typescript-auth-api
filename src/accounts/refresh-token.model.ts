@@ -10,11 +10,9 @@ export interface RefreshTokenAttributes {
     revokedByIp: string | null;
     replacedByToken: string | null;
     accountId: number;
-    createdAt: Date;
-    updatedAt: Date;
 }
 
-interface RefreshTokenCreationAttributes extends Optional<RefreshTokenAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+interface RefreshTokenCreationAttributes extends Optional<RefreshTokenAttributes, 'id'> {}
 
 class RefreshToken extends Model<RefreshTokenAttributes, RefreshTokenCreationAttributes> implements RefreshTokenAttributes {
     public id!: number;
@@ -25,8 +23,7 @@ class RefreshToken extends Model<RefreshTokenAttributes, RefreshTokenCreationAtt
     public revokedByIp!: string | null;
     public replacedByToken!: string | null;
     public accountId!: number;
-    public readonly createdAt!: Date;
-    public readonly updatedAt!: Date;
+
 
     get isExpired(): boolean {
         return Date.now() >= this.expires.getTime();
@@ -47,16 +44,12 @@ export function initRefreshToken(sequelize: Sequelize): typeof RefreshToken {
             revoked: { type: DataTypes.DATE, allowNull: true },
             revokedByIp: { type: DataTypes.STRING, allowNull: true },
             replacedByToken: { type: DataTypes.STRING, allowNull: true },
-            accountId: { type: DataTypes.INTEGER, allowNull: false },
-            createdAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-            updatedAt: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
+            accountId: { type: DataTypes.INTEGER, allowNull: false }
         },
         {
-            sequelize,
-            tableName: 'refreshTokens',
-            createdAt: 'created',
-            updatedAt: false,
-
+         sequelize,
+        tableName: 'refreshTokens',
+        timestamps: false
         }
     );
     

@@ -23,14 +23,11 @@ function initRefreshToken(sequelize) {
         revoked: { type: sequelize_1.DataTypes.DATE, allowNull: true },
         revokedByIp: { type: sequelize_1.DataTypes.STRING, allowNull: true },
         replacedByToken: { type: sequelize_1.DataTypes.STRING, allowNull: true },
-        accountId: { type: sequelize_1.DataTypes.INTEGER, allowNull: false },
-        createdAt: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW },
-        updatedAt: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW }
+        accountId: { type: sequelize_1.DataTypes.INTEGER, allowNull: false }
     }, {
         sequelize,
         tableName: 'refreshTokens',
-        createdAt: 'created',
-        updatedAt: false,
+        timestamps: false
     });
     // Define relationship
     account_model_1.default.hasMany(RefreshToken, { as: 'RefreshTokens', foreignKey: 'accountId' });
