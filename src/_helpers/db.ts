@@ -1,7 +1,6 @@
-import mysql from 'mysql2/promise';
 import { Sequelize } from 'sequelize';
-import { initAccount } from '../accounts/account.model';
-import { initRefreshToken } from '../accounts/refresh-token.model';
+import accountModel from '../accounts/account.model';
+import refreshTokenModel from '../accounts/refresh-token.model';
 
 const db: any = {};
 export default db;
@@ -9,35 +8,41 @@ export default db;
 async function initialize() {
     const host = process.env.DB_HOST || 'localhost';
     const port = parseInt(process.env.DB_PORT || '3306');
-    const user = process.env.DB_USER || 'root';
-    const password = process.env.DB_PASSWORD || '';
-    const database = process.env.DB_NAME || 'manto_db';
+    const user = process.env.DB_USER;
+    const password = process.env.DB_PASSWORD;
+    const database = process.env.DB_NAME;
 
     console.log('Connecting to DB:', { host, port, user, database });
 
-    const connection = await mysql.createConnection({ host, port, user, password });
-
-    if (process.env.NODE_ENV !== 'production' && host === 'localhost') {
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${database}\``);
+    if (!host || !user || !password || !database) {
+        throw new Error('Missing required database environment variables');
     }
-    await connection.end();
 
     const sequelize = new Sequelize(database, user, password, {
-        host: host,
-        port: port,
+        host,
+        port,
         dialect: 'mysql',
+        logging: false,
         dialectOptions: {
-            ssl: process.env.DB_SSL === 'true' ? {
-                require: true,
-                rejectUnauthorized: false
-            } : false
+            connectTimeout: 30000
+        },
+        define: {
+            charset: 'utf8mb4',
+            collate: 'utf8mb4_general_ci'
         }
     });
 
-    db.Account = initAccount(sequelize);
-    db.RefreshToken = initRefreshToken(sequelize);
+    await sequelize.authenticate();
+    console.log('DB connection established successfully.');
 
-   // await sequelize.sync({ alter: false });
+    db.Account = accountModel(sequelize);
+    db.RefreshToken = refreshTokenModel(sequelize);
+
+    db.Account.hasMany(db.RefreshToken, { onDelete: 'CASCADE' });
+    db.RefreshToken.belongsTo(db.Account);
+
+    await sequelize.sync({ alter: true });
+    console.log('DB synced successfully.');
 }
 
 export { initialize };

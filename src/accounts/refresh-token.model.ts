@@ -1,63 +1,33 @@
-import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
-import Account from './account.model';
+import { DataTypes } from "sequelize";
 
-export interface RefreshTokenAttributes {
-    id: number;
-    token: string;
-    expires: Date;
-    createdByIp: string;
-    revoked: Date | null;
-    revokedByIp: string | null;
-    replacedByToken: string | null;
-    accountId: number;
-}
-
-interface RefreshTokenCreationAttributes extends Optional<RefreshTokenAttributes, 'id'> {}
-
-class RefreshToken extends Model<RefreshTokenAttributes, RefreshTokenCreationAttributes> implements RefreshTokenAttributes {
-    public id!: number;
-    public token!: string;
-    public expires!: Date;
-    public createdByIp!: string;
-    public revoked!: Date | null;
-    public revokedByIp!: string | null;
-    public replacedByToken!: string | null;
-    public accountId!: number;
-
-
-    get isExpired(): boolean {
-        return Date.now() >= this.expires.getTime();
-    }
-
-    get isActive(): boolean {
-        return !this.revoked && !this.isExpired;
-    }
-}
-
-export function initRefreshToken(sequelize: Sequelize): typeof RefreshToken {
-    RefreshToken.init(
-        {
-            id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-            token: { type: DataTypes.STRING, allowNull: false },
-            expires: { type: DataTypes.DATE, allowNull: false },
-            createdByIp: { type: DataTypes.STRING, allowNull: false },
-            revoked: { type: DataTypes.DATE, allowNull: true },
-            revokedByIp: { type: DataTypes.STRING, allowNull: true },
-            replacedByToken: { type: DataTypes.STRING, allowNull: true },
-            accountId: { type: DataTypes.INTEGER, allowNull: false }
+export default function model(sequelize: any) {
+    const attributes = {
+        token: { type: DataTypes.STRING, allowNull: false },
+        expires: { type: DataTypes.DATE, allowNull: false },
+        created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+        createdByIp: { type: DataTypes.STRING, allowNull: false },
+        revoked: { type: DataTypes.DATE, allowNull: true },
+        revokedByIp: { type: DataTypes.STRING, allowNull: true },
+        replacedByToken: { type: DataTypes.STRING, allowNull: true },
+        accountId: { type: DataTypes.INTEGER, allowNull: false },
+        isExpired: {
+            type: DataTypes.VIRTUAL,
+            get(this: any) {
+                return Date.now() >= new Date(this.expires).getTime();
+            }
         },
-        {
-         sequelize,
-        tableName: 'refreshTokens',
-        timestamps: false
+        isActive: {
+            type: DataTypes.VIRTUAL,
+            get(this: any) {
+                return !this.revoked && !this.isExpired;
+            }
         }
-    );
-    
-    // Define relationship
-    Account.hasMany(RefreshToken, { as: 'RefreshTokens', foreignKey: 'accountId' });
-    RefreshToken.belongsTo(Account, { foreignKey: 'accountId' });
-    
-    return RefreshToken;
-}
+    };
 
-export default RefreshToken;
+    const options = {
+        timestamps: false,
+        tableName: 'refreshTokens'
+    };
+
+    return sequelize.define('RefreshToken', attributes, options);
+}

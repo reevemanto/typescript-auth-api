@@ -1,68 +1,32 @@
-import { DataTypes, Model, Optional, Sequelize } from 'sequelize';
+import { DataTypes } from "sequelize";   
 
-export interface AccountAttributes {
-    id: number;
-    email: string;
-    passwordHash: string;
-    title: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-    verificationToken: string | null;
-    verified: Date | null;
-    resetToken: string | null;
-    resetTokenExpires: Date | null;
-   created : Date;
-   updated : Date;
-}
-
-interface AccountCreationAttributes extends Optional<AccountAttributes, 'id'> {}
-
-class Account extends Model<AccountAttributes, AccountCreationAttributes> implements AccountAttributes {
-    public id!: number;
-    public email!: string;
-    public passwordHash!: string;
-    public title!: string;
-    public firstName!: string;
-    public lastName!: string;
-    public role!: string;
-    public verificationToken!: string | null;
-    public verified!: Date | null;
-    public resetToken!: string | null;
-    public resetTokenExpires!: Date | null;
-    public readonly created!: Date;
-    public readonly updated!: Date;
-}
-
-export function initAccount(sequelize: Sequelize): typeof Account {
-    Account.init(
-        {
-            id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-            email: { type: DataTypes.STRING, allowNull: false, unique: true },
-            passwordHash: { type: DataTypes.STRING, allowNull: false },
-            title: { type: DataTypes.STRING, allowNull: false },
-            firstName: { type: DataTypes.STRING, allowNull: false },
-            lastName: { type: DataTypes.STRING, allowNull: false },
-            role: { type: DataTypes.STRING, allowNull: false, defaultValue: 'User' },
-            verificationToken: { type: DataTypes.STRING, allowNull: true },
-            verified: { type: DataTypes.DATE, allowNull: true },
-            resetToken: { type: DataTypes.STRING, allowNull: true },
-            resetTokenExpires: { type: DataTypes.DATE, allowNull: true },
-            created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
-            updated: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW }
-        },
-        {
-            sequelize,
-            tableName: 'accounts',
-            timestamps: true,
-            createdAt   : 'created',
-            updatedAt   : 'updated',    
-            defaultScope: { attributes: { exclude: ['passwordHash'] } },
-            scopes: { withHash: { attributes: undefined } }
+export default function model(sequelize: any) {
+    const attributes: any = {
+        email: { type: DataTypes.STRING, allowNull: false },
+        passwordHash: { type: DataTypes.STRING, allowNull: false },
+        title: { type: DataTypes.STRING, allowNull: false },
+        firstName: { type: DataTypes.STRING, allowNull: false },
+        lastName: { type: DataTypes.STRING, allowNull: false },
+        acceptTerms: { type: DataTypes.BOOLEAN, allowNull: false },
+        role: { type: DataTypes.STRING, allowNull: false },
+        verificationToken: { type: DataTypes.STRING },
+        verified: { type: DataTypes.DATE },
+        resetToken: { type: DataTypes.STRING },
+        resetTokenExpires: { type: DataTypes.DATE },
+        passwordReset: { type: DataTypes.DATE },
+        created: { type: DataTypes.DATE, allowNull: false, defaultValue: DataTypes.NOW },
+        updated: { type: DataTypes.DATE },
+        isVerified: {   
+            type: DataTypes.VIRTUAL,
+            get(this: any) { return !!(this.getDataValue('verified') || this.getDataValue('passwordReset')); }
         }
-    
-    );
-    return Account;
-}
+    };
 
-export default Account;
+    const options = {
+        timestamps: false,
+        defaultScope: { attributes: { exclude: ['passwordHash'] } },
+        scopes: { withHash: { attributes: {} } }
+    };
+
+    return sequelize.define('Account', attributes, options);
+}
