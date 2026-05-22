@@ -28,7 +28,9 @@ function initRefreshToken(sequelize) {
         updatedAt: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW }
     }, {
         sequelize,
-        tableName: 'refreshTokens'
+        tableName: 'refreshTokens',
+        createdAt: 'created',
+        updatedAt: 'updated'
     });
     // Define relationship
     account_model_1.default.hasMany(RefreshToken, { as: 'RefreshTokens', foreignKey: 'accountId' });
