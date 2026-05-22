@@ -19,17 +19,9 @@ async function initialize() {
     }
 
     const sequelize = new Sequelize(database, user, password, {
-        host,
-        port,
-        dialect: 'mysql',
-        logging: false,
-        dialectOptions: {
-            connectTimeout: 30000
-        },
-        define: {
-            charset: 'utf8mb4',
-            collate: 'utf8mb4_general_ci'
-        }
+        host: host,
+        port: port,
+        dialect: 'mysql'
     });
 
     await sequelize.authenticate();
@@ -38,12 +30,14 @@ async function initialize() {
     db.Account = accountModel(sequelize);
     db.RefreshToken = refreshTokenModel(sequelize);
 
-  
     db.Account.hasMany(db.RefreshToken, { foreignKey: 'accountId', onDelete: 'CASCADE' });
     db.RefreshToken.belongsTo(db.Account, { foreignKey: 'accountId' });
 
-    await sequelize.sync({ alter: true });
-    console.log('DB synced successfully.');
+
+   await sequelize.sync();
+    console.log('DB ready — tables already exist.');
 }
+
+
 
 export { initialize };

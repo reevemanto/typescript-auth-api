@@ -1,32 +1,32 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.initAccount = initAccount;
+exports.default = model;
 const sequelize_1 = require("sequelize");
-class Account extends sequelize_1.Model {
-}
-function initAccount(sequelize) {
-    Account.init({
-        id: { type: sequelize_1.DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
-        email: { type: sequelize_1.DataTypes.STRING, allowNull: false, unique: true },
+function model(sequelize) {
+    const attributes = {
+        email: { type: sequelize_1.DataTypes.STRING, allowNull: false },
         passwordHash: { type: sequelize_1.DataTypes.STRING, allowNull: false },
         title: { type: sequelize_1.DataTypes.STRING, allowNull: false },
         firstName: { type: sequelize_1.DataTypes.STRING, allowNull: false },
         lastName: { type: sequelize_1.DataTypes.STRING, allowNull: false },
-        role: { type: sequelize_1.DataTypes.STRING, allowNull: false, defaultValue: 'User' },
-        verificationToken: { type: sequelize_1.DataTypes.STRING, allowNull: true },
-        verified: { type: sequelize_1.DataTypes.DATE, allowNull: true },
-        resetToken: { type: sequelize_1.DataTypes.STRING, allowNull: true },
-        resetTokenExpires: { type: sequelize_1.DataTypes.DATE, allowNull: true },
-        createdAt: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW },
-        updatedAt: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW }
-    }, {
-        sequelize,
-        tableName: 'accounts',
-        createdAt: 'created',
-        updatedAt: 'updated',
+        acceptTerms: { type: sequelize_1.DataTypes.BOOLEAN, allowNull: false },
+        role: { type: sequelize_1.DataTypes.STRING, allowNull: false },
+        verificationToken: { type: sequelize_1.DataTypes.STRING },
+        verified: { type: sequelize_1.DataTypes.DATE },
+        resetToken: { type: sequelize_1.DataTypes.STRING },
+        resetTokenExpires: { type: sequelize_1.DataTypes.DATE },
+        passwordReset: { type: sequelize_1.DataTypes.DATE },
+        created: { type: sequelize_1.DataTypes.DATE, allowNull: false, defaultValue: sequelize_1.DataTypes.NOW },
+        updated: { type: sequelize_1.DataTypes.DATE },
+        isVerified: {
+            type: sequelize_1.DataTypes.VIRTUAL,
+            get() { return !!(this.getDataValue('verified') || this.getDataValue('passwordReset')); }
+        }
+    };
+    const options = {
+        timestamps: false,
         defaultScope: { attributes: { exclude: ['passwordHash'] } },
-        scopes: { withHash: { attributes: undefined } }
-    });
-    return Account;
+        scopes: { withHash: { attributes: {} } }
+    };
+    return sequelize.define('Account', attributes, options);
 }
-exports.default = Account;
