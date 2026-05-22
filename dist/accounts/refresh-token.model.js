@@ -30,7 +30,7 @@ function initRefreshToken(sequelize) {
         sequelize,
         tableName: 'refreshTokens',
         createdAt: 'created',
-        updatedAt: 'updated'
+        updatedAt: false,
     });
     // Define relationship
     account_model_1.default.hasMany(RefreshToken, { as: 'RefreshTokens', foreignKey: 'accountId' });

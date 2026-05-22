@@ -55,7 +55,8 @@ export function initRefreshToken(sequelize: Sequelize): typeof RefreshToken {
             sequelize,
             tableName: 'refreshTokens',
             createdAt: 'created',
-            updatedAt: 'updated'
+            updatedAt: false,
+
         }
     );
     
