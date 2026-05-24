@@ -1,3 +1,4 @@
+import { truncateSync } from "fs";
 import { DataTypes } from "sequelize";   
 
 export default function model(sequelize: any) {
@@ -7,7 +8,7 @@ export default function model(sequelize: any) {
         title: { type: DataTypes.STRING, allowNull: false },
         firstName: { type: DataTypes.STRING, allowNull: false },
         lastName: { type: DataTypes.STRING, allowNull: false },
-        acceptTerms: { type: DataTypes.BOOLEAN, allowNull: false },
+        acceptTerms: { type: DataTypes.BOOLEAN, allowNull: true },
         role: { type: DataTypes.STRING, allowNull: false },
         verificationToken: { type: DataTypes.STRING },
         verified: { type: DataTypes.DATE },
